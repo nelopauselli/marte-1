@@ -41,7 +41,7 @@ void loop()
         break;
     }
 
-    delay(2);
+    delay(1);
 
     steps++;
     if (steps > 4096)
