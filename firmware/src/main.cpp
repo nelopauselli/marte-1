@@ -41,10 +41,10 @@ void loop()
         break;
     }
 
-    delay(1);
+    delay(3);
 
     steps++;
-    if (steps > 4096)
+    if (steps > 2048)
     {
         steps = 0;
         switch (direction)
