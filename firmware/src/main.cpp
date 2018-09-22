@@ -1,131 +1,70 @@
 #include <Arduino.h>
+#include "Motor.cpp"
 
-#define IN1 2
-#define IN2 3
-#define IN3 4
-#define IN4 5
+#define FOWARD 1
+#define RIGHT 2
+#define BACK 3
+#define LEFT 4
+int direction = FOWARD;
 
-int Steps = 0;
-boolean Direction = true; // gre
-unsigned long last_time;
-unsigned long currentMillis;
-int steps_left = 4095;
-long time;
-
-void SetDirection()
-{
-    if (Direction == 1)
-    {
-        Steps++;
-        //Steps++;
-    }
-    if (Direction == 0)
-    {
-        Steps--;
-        //Steps--;
-    }
-    if (Steps > 7)
-    {
-        Steps = 0;
-    }
-    if (Steps < 0)
-    {
-        Steps = 7;
-    }
-}
-
-void stepper(int xw)
-{
-    for (int x = 0; x < xw; x++)
-    {
-        switch (Steps)
-        {
-        case 0:
-            digitalWrite(IN1, LOW);
-            digitalWrite(IN2, LOW);
-            digitalWrite(IN3, LOW);
-            digitalWrite(IN4, HIGH);
-            break;
-        case 1:
-            digitalWrite(IN1, LOW);
-            digitalWrite(IN2, LOW);
-            digitalWrite(IN3, HIGH);
-            digitalWrite(IN4, HIGH);
-            break;
-        case 2:
-            digitalWrite(IN1, LOW);
-            digitalWrite(IN2, LOW);
-            digitalWrite(IN3, HIGH);
-            digitalWrite(IN4, LOW);
-            break;
-        case 3:
-            digitalWrite(IN1, LOW);
-            digitalWrite(IN2, HIGH);
-            digitalWrite(IN3, HIGH);
-            digitalWrite(IN4, LOW);
-            break;
-        case 4:
-            digitalWrite(IN1, LOW);
-            digitalWrite(IN2, HIGH);
-            digitalWrite(IN3, LOW);
-            digitalWrite(IN4, LOW);
-            break;
-        case 5:
-            digitalWrite(IN1, HIGH);
-            digitalWrite(IN2, HIGH);
-            digitalWrite(IN3, LOW);
-            digitalWrite(IN4, LOW);
-            break;
-        case 6:
-            digitalWrite(IN1, HIGH);
-            digitalWrite(IN2, LOW);
-            digitalWrite(IN3, LOW);
-            digitalWrite(IN4, LOW);
-            break;
-        case 7:
-            digitalWrite(IN1, HIGH);
-            digitalWrite(IN2, LOW);
-            digitalWrite(IN3, LOW);
-            digitalWrite(IN4, HIGH);
-            break;
-        default:
-            digitalWrite(IN1, LOW);
-            digitalWrite(IN2, LOW);
-            digitalWrite(IN3, LOW);
-            digitalWrite(IN4, LOW);
-            break;
-        }
-        SetDirection();
-    }
-}
+Motor motorDerecho(5, 4, 3, 2);
+Motor motorIzquierdo(9, 8, 7, 6);
 
 void setup()
 {
     Serial.begin(115200);
-    pinMode(IN1, OUTPUT);
-    pinMode(IN2, OUTPUT);
-    pinMode(IN3, OUTPUT);
-    pinMode(IN4, OUTPUT);
     // delay(1000);
+
+    Serial.println("Motores Inicializados");
 }
 
+int steps = 0;
 void loop()
 {
-    while (steps_left > 0)
+    switch (direction)
     {
-        currentMillis = micros();
-        if (currentMillis - last_time >= 1000)
+    case FOWARD:
+        motorDerecho.foward();
+        motorIzquierdo.foward();
+        break;
+    case LEFT:
+        motorDerecho.foward();
+        motorIzquierdo.back();
+        break;
+    case BACK:
+        motorDerecho.back();
+        motorIzquierdo.back();
+        break;
+    case RIGHT:
+        motorDerecho.back();
+        motorIzquierdo.foward();
+        break;
+    }
+
+    delay(2);
+
+    steps++;
+    if (steps > 4096)
+    {
+        steps = 0;
+        switch (direction)
         {
-            stepper(1);
-            time = time + micros() - last_time;
-            last_time = micros();
-            steps_left--;
-            delay(2);
+        case FOWARD:
+            direction = BACK;
+            Serial.println("Back");
+            break;
+        case BACK:
+            direction = LEFT;
+            Serial.println("Left");
+            break;
+        case LEFT:
+            direction = RIGHT;
+            Serial.println("Right");
+            break;
+        case RIGHT:
+            direction = FOWARD;
+            Serial.println("Foward");
+            break;
         }
     }
-    Serial.println(time);
-    Serial.println("Wait...!");
-    delay(2000);
-    Direction = !Direction;
-    steps_left = 4095;
 }
