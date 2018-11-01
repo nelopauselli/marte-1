@@ -1,9 +1,13 @@
 #include <Arduino.h>
+#include <EEPROM.h>
 #include "Motor.cpp"
 
 #define BUTTON_1 11
 #define BUTTON_2 10
 #define BUTTON_3 12
+
+#define SPEED_RIGHT_OFFSET 0
+#define SPEED_LEFT_OFFSET 1
 
 #define NONE 0
 #define FOWARD 1
@@ -13,13 +17,14 @@
 
 int direction = NONE;
 
-Motor motorDerecho(2, 3);
-Motor motorIzquierdo(5, 4);
+Motor motorDerecho(2, 4, 3);
+Motor motorIzquierdo(7, 5, 6);
 
 #define MODE_NONE 0
 #define MODE_PROG 1
 #define MODE_RUN 2
 #define MODE_TEST 3
+#define MODE_CALIBRATION 4
 
 int mode = MODE_NONE;
 
@@ -54,6 +59,12 @@ void setMode(int value)
         blink(200);
         blink(100);
     }
+    else if (mode == MODE_CALIBRATION)
+    {
+        blink(200);
+        blink(200);
+        blink(200);
+    }
 }
 
 void setup()
@@ -65,8 +76,16 @@ void setup()
     pinMode(BUTTON_3, INPUT_PULLUP);
 
     //test();
-
-    setMode(MODE_PROG);
+    delay(10);
+    if (digitalRead(BUTTON_1) == LOW)
+    {
+        setMode(MODE_CALIBRATION);
+    }
+    else{
+        motorDerecho.setSpeed(EEPROM.read(SPEED_RIGHT_OFFSET));
+        motorIzquierdo.setSpeed(EEPROM.read(SPEED_LEFT_OFFSET));
+        setMode(MODE_PROG);
+    }
 }
 
 void tester()
@@ -122,6 +141,37 @@ void programmer()
     }
 }
 
+void calibrate()
+{
+    if (digitalRead(BUTTON_2) == LOW)
+    {
+        motorIzquierdo.faster();
+        blink();
+    }
+    else if (digitalRead(BUTTON_3) == LOW)
+    {
+        motorDerecho.faster();
+        blink();
+    }
+
+    if (digitalRead(BUTTON_1) == LOW)
+    {
+        motorDerecho.stop();
+        motorIzquierdo.stop();
+
+        EEPROM.write(SPEED_RIGHT_OFFSET, motorDerecho.getSpeed());
+        EEPROM.write(SPEED_LEFT_OFFSET, motorIzquierdo.getSpeed());
+
+        setMode(MODE_PROG);
+
+        blink();
+    }
+    else{
+        motorDerecho.foward();
+        motorIzquierdo.foward();
+    }
+}
+
 void runner()
 {
     byte command = commands[current++];
@@ -173,6 +223,10 @@ void loop()
     else if (mode == MODE_TEST)
     {
         tester();
+    }
+    else if (mode == MODE_CALIBRATION)
+    {
+        calibrate();
     }
     return;
 }
